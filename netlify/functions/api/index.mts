@@ -1,8 +1,8 @@
 import type { Config, Context } from "@netlify/functions";
 import {
   db, HttpError, json, readBody, str, int, USERNAME_RE, normUsername, checkPassword, normPhone,
-  bkkDate, hashPassword, verifyPassword, createSession, destroySession, currentUser, requireUser,
-  publicUser, type User,
+  bkkDate, hashPassword, verifyPassword, createSession, destroySession, requireUser,
+  publicUser, sha256, newToken, type User,
 } from "./core.mts";
 import {
   DEFAULT_MENU, DEFAULT_STORE, getMenu, getStore, updateSetting, sanitizeMenu, sanitizeStorePatch,
@@ -25,7 +25,7 @@ function toOrder(r: any) {
   return {
     id: r.id,
     no: r.daily_no,
-    code: `#${String(r.daily_no).padStart(3, "0")}`,
+    code: String(r.daily_no).padStart(2, "0"),
     businessDate: r.business_date,
     userId: r.user_id,
     name: r.customer_name,
@@ -59,7 +59,6 @@ async function login(req: Request) {
   const b = await readBody(req);
   const username = normUsername(b.username);
   const password = typeof b.password === "string" ? b.password : "";
-  const portal = b.portal === "kitchen" ? "kitchen" : "customer";
   const rows = await db().sql`SELECT * FROM users WHERE username = ${username}`;
   const u = rows[0] as (User & { failed_logins: number; locked_until: Date | null }) | undefined;
 
@@ -77,28 +76,9 @@ async function login(req: Request) {
     throw new HttpError(400, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
   }
   if (!u.active) throw new HttpError(403, "บัญชีนี้ถูกระงับ กรุณาติดต่อร้าน");
-  if (portal === "kitchen" && u.role === "customer") throw new HttpError(403, "บัญชีลูกค้าไม่สามารถเข้าหน้าครัวได้");
-  if (portal === "customer" && u.role !== "customer") throw new HttpError(403, "บัญชีพนักงานใช้ได้เฉพาะหน้าครัว");
+  if (u.role === "customer") throw new HttpError(403, "บัญชีนี้ไม่มีสิทธิ์เข้าหน้าครัว");
   await db().sql`UPDATE users SET failed_logins = 0, locked_until = NULL WHERE id = ${u.id}`;
   return json({ token: await createSession(u.id), user: publicUser(u) });
-}
-
-async function register(req: Request) {
-  const b = await readBody(req);
-  const username = normUsername(b.username);
-  if (!USERNAME_RE.test(username)) throw new HttpError(400, "ชื่อผู้ใช้ต้องเป็น a-z, 0-9, _ หรือ . ยาว 3-24 ตัว");
-  const password = checkPassword(b.password);
-  const displayName = str(b.displayName, 40);
-  const phone = normPhone(b.phone);
-  if (displayName.length < 1) throw new HttpError(400, "กรุณากรอกชื่อที่ใช้เรียก");
-  if (phone.length < 9 || phone.length > 10) throw new HttpError(400, "เบอร์โทรศัพท์ไม่ถูกต้อง");
-  const hash = await hashPassword(password);
-  const rows = await db().sql`
-    INSERT INTO users (username, password_hash, role, display_name, phone)
-    VALUES (${username}, ${hash}, 'customer', ${displayName}, ${phone})
-    ON CONFLICT (username) DO NOTHING RETURNING *`;
-  if (!rows[0]) throw new HttpError(409, "ชื่อผู้ใช้นี้ถูกใช้แล้ว");
-  return json({ token: await createSession(rows[0].id), user: publicUser(rows[0] as User) }, 201);
 }
 
 async function setupStatus() {
@@ -126,7 +106,6 @@ async function setup(req: Request) {
 /* ============================== ROUTES ============================== */
 const routes: [string, RegExp, Handler][] = [
   ["POST", /^\/auth\/login$/, login],
-  ["POST", /^\/auth\/register$/, register],
   ["POST", /^\/auth\/logout$/, async (req) => { await destroySession(req); return json({ ok: true }); }],
   ["GET", /^\/auth\/me$/, async (req) => json({ user: publicUser(await requireUser(req)) })],
   ["GET", /^\/setup$/, setupStatus],
@@ -139,7 +118,6 @@ const routes: [string, RegExp, Handler][] = [
     const displayName = "displayName" in b ? str(b.displayName, 40) : u.display_name;
     const phone = "phone" in b ? normPhone(b.phone) : u.phone;
     if (!displayName) throw new HttpError(400, "กรุณากรอกชื่อ");
-    if (u.role === "customer" && (phone.length < 9 || phone.length > 10)) throw new HttpError(400, "เบอร์โทรศัพท์ไม่ถูกต้อง");
     const [row] = await db().sql`
       UPDATE users SET display_name = ${displayName}, phone = ${phone} WHERE id = ${u.id} RETURNING *`;
     return json({ user: publicUser(row as User) });
@@ -176,21 +154,20 @@ const routes: [string, RegExp, Handler][] = [
 
   /* ---------- customer orders ---------- */
   ["POST", /^\/orders$/, async (req) => {
-    const u = await requireUser(req, ["customer"]);
     const b = await readBody(req);
+    const name = str(b.name, 40);
+    const phone = normPhone(b.phone);
+    if (!name) throw new HttpError(400, "กรุณากรอกชื่อ");
+    if (phone.length < 9 || phone.length > 10) throw new HttpError(400, "เบอร์โทรศัพท์ไม่ถูกต้อง");
     const [store, menu, active] = await Promise.all([getStore(), getMenu(), activeCount()]);
     if (!store.open) throw new HttpError(409, "ขณะนี้ร้านปิดรับออเดอร์");
     if (store.maxActive > 0 && active >= store.maxActive) throw new HttpError(409, "คิวเต็มชั่วคราว กรุณาลองใหม่อีกสักครู่");
     const [mine] = await db().sql`
-      SELECT COUNT(*)::int AS n FROM orders WHERE user_id = ${u.id} AND status IN ('pending', 'cooking', 'ready')`;
-    if (mine.n >= 3) throw new HttpError(429, "คุณมีออเดอร์ที่ยังไม่ได้รับ 3 รายการแล้ว กรุณารับอาหารก่อนสั่งเพิ่ม");
+      SELECT COUNT(*)::int AS n FROM orders WHERE phone = ${phone} AND status IN ('pending', 'cooking', 'ready')`;
+    if (mine.n >= 3) throw new HttpError(429, "เบอร์นี้มีออเดอร์ที่ยังไม่ได้รับ 3 รายการแล้ว กรุณารับอาหารก่อนสั่งเพิ่ม");
 
     const items = priceItems(menu, b.items);
     const total = items.reduce((s, it) => s + it.lineTotal, 0);
-    const name = str(b.name, 40) || u.display_name;
-    const phone = normPhone(b.phone) || u.phone;
-    if (!name) throw new HttpError(400, "กรุณากรอกชื่อผู้รับ");
-    if (phone.length < 9 || phone.length > 10) throw new HttpError(400, "เบอร์โทรศัพท์ไม่ถูกต้อง");
     const payment = b.paymentMethod === "promptpay" && store.promptpay ? "promptpay" : "cash";
     const pickup = new Date(Number(b.pickupAt));
     const now = Date.now();
@@ -199,53 +176,62 @@ const routes: [string, RegExp, Handler][] = [
     }
     const note = str(b.note, 200);
     const bd = bkkDate();
+    const token = newToken();
     for (let attempt = 0; attempt < 6; attempt++) {
       try {
         const [row] = await db().sql`
-          INSERT INTO orders (business_date, daily_no, user_id, customer_name, phone, items, note, total, payment_method, pickup_at)
+          INSERT INTO orders (business_date, daily_no, customer_name, phone, items, note, total, payment_method, pickup_at, access_token_hash)
           VALUES (
             ${bd},
             (SELECT COALESCE(MAX(daily_no), 0) + 1 FROM orders WHERE business_date = ${bd}),
-            ${u.id}, ${name}, ${phone}, ${JSON.stringify(items)}::jsonb, ${note}, ${total}, ${payment}, ${pickup.toISOString()}
+            ${name}, ${phone}, ${JSON.stringify(items)}::jsonb, ${note}, ${total}, ${payment}, ${pickup.toISOString()}, ${sha256(token)}
           ) RETURNING *`;
-        return json({ order: toOrder(row) }, 201);
+        return json({ order: toOrder(row), token }, 201);
       } catch (e: any) {
         if (e?.code !== "23505") throw e; // unique violation on daily_no -> retry
       }
     }
     throw new HttpError(503, "ระบบไม่ว่าง กรุณาลองใหม่");
   }],
-  ["GET", /^\/orders\/mine$/, async (req) => {
-    const u = await requireUser(req, ["customer"]);
+  // The ordering device keeps {id, token} pairs; only matching pairs are returned.
+  ["POST", /^\/orders\/track$/, async (req) => {
+    const b = await readBody(req);
+    const pairs = (Array.isArray(b.orders) ? b.orders : []).slice(0, 30)
+      .map((x: any) => ({ id: Number(x?.id), hash: sha256(String(x?.token || "")) }))
+      .filter((x: { id: number }) => Number.isInteger(x.id) && x.id > 0);
+    const store = await getStore();
+    if (!pairs.length) return json({ orders: [], minutesPerOrder: store.minutesPerOrder });
+    const ids = pairs.map((x: { id: number }) => x.id);
     const rows = await db().sql`
       SELECT o.*, (
         SELECT COUNT(*)::int FROM orders a
         WHERE a.status IN ('pending', 'cooking') AND a.created_at < o.created_at
       ) AS ahead
-      FROM orders o WHERE o.user_id = ${u.id}
-      ORDER BY o.created_at DESC LIMIT 40`;
-    const store = await getStore();
+      FROM orders o WHERE o.id = ANY(${ids}::int[])
+      ORDER BY o.created_at DESC`;
+    const allowed = new Set(pairs.map((x: { id: number; hash: string }) => `${x.id}:${x.hash}`));
     return json({
-      orders: rows.map((r: any) => ({ ...toOrder(r), ahead: ACTIVE.includes(r.status) ? r.ahead : 0 })),
+      orders: rows
+        .filter((r: any) => r.access_token_hash && allowed.has(`${r.id}:${r.access_token_hash}`))
+        .map((r: any) => ({ ...toOrder(r), ahead: ACTIVE.includes(r.status) ? r.ahead : 0 })),
       minutesPerOrder: store.minutesPerOrder,
     });
   }],
   ["POST", /^\/orders\/(?<id>\d+)\/cancel$/, async (req, p) => {
-    const u = await requireUser(req, ["customer"]);
+    const b = await readBody(req);
     const rows = await db().sql`
       UPDATE orders SET status = 'cancelled', cancelled_at = NOW(), updated_at = NOW(), cancel_reason = 'ลูกค้ายกเลิกเอง'
-      WHERE id = ${Number(p.id)} AND user_id = ${u.id} AND status = 'pending' RETURNING *`;
+      WHERE id = ${Number(p.id)} AND access_token_hash = ${sha256(String(b.token || ""))} AND status = 'pending' RETURNING *`;
     if (!rows[0]) throw new HttpError(409, "ยกเลิกไม่ได้ ครัวเริ่มทำออเดอร์นี้แล้ว");
     return json({ order: toOrder(rows[0]) });
   }],
   ["POST", /^\/orders\/(?<id>\d+)\/rate$/, async (req, p) => {
-    const u = await requireUser(req, ["customer"]);
     const b = await readBody(req);
     const rating = int(b.rating, 1, 5, 5);
     const review = str(b.review, 300);
     const rows = await db().sql`
       UPDATE orders SET rating = ${rating}, review = ${review}, updated_at = NOW()
-      WHERE id = ${Number(p.id)} AND user_id = ${u.id} AND status = 'completed' RETURNING *`;
+      WHERE id = ${Number(p.id)} AND access_token_hash = ${sha256(String(b.token || ""))} AND status = 'completed' RETURNING *`;
     if (!rows[0]) throw new HttpError(409, "ให้คะแนนได้เฉพาะออเดอร์ที่รับแล้ว");
     return json({ order: toOrder(rows[0]) });
   }],
@@ -342,7 +328,7 @@ const routes: [string, RegExp, Handler][] = [
   ["GET", /^\/admin\/users$/, async (req) => {
     await requireUser(req, ["admin"]);
     const staff = await db().sql`SELECT * FROM users WHERE role IN ('staff', 'admin') ORDER BY role, created_at`;
-    const [c] = await db().sql`SELECT COUNT(*)::int AS n FROM users WHERE role = 'customer'`;
+    const [c] = await db().sql`SELECT COUNT(DISTINCT phone)::int AS n FROM orders`;
     return json({ users: staff.map((u: any) => publicUser(u)), customerCount: c.n });
   }],
   ["POST", /^\/admin\/users$/, async (req) => {

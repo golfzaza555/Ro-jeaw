@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Brand, FullPageSpinner, Modal, cx, useToast } from '../shared/ui.jsx';
-import { IconHome, IconMegaphone, IconReceipt, IconUser, IconChevronRight } from '../shared/icons.jsx';
+import { IconHome, IconMegaphone, IconReceipt, IconChevronRight } from '../shared/icons.jsx';
 import { chime, money, unlockAudio } from '../shared/format.js';
 import { usePolling, useStoredState } from '../shared/hooks.js';
 import { api } from './api.js';
@@ -8,12 +8,10 @@ import { newKey, priceLine, toppingMap } from './menu.js';
 import Builder from './Builder.jsx';
 import Cart from './Cart.jsx';
 import Orders from './Orders.jsx';
-import Profile from './Profile.jsx';
 
 const TABS = [
   { id: 'order', label: 'สั่งอาหาร', Icon: IconHome },
-  { id: 'orders', label: 'ออเดอร์ของฉัน', Icon: IconReceipt },
-  { id: 'profile', label: 'บัญชี', Icon: IconUser },
+  { id: 'orders', label: 'คิวของฉัน', Icon: IconReceipt },
 ];
 
 function notify(title, body) {
@@ -24,21 +22,29 @@ function notify(title, body) {
   } catch { /* some mobile browsers only allow SW notifications */ }
 }
 
-export default function App({ user, setUser, onLogout }) {
+export default function App() {
   const toast = useToast();
   const [tab, setTab] = useState('order');
   const [info, setInfo] = useState(null);
   const [orders, setOrders] = useState([]);
   const [minutesPerOrder, setMinutesPerOrder] = useState(4);
-  const [cart, setCart] = useStoredState(`rj_cart_${user.id}`, []);
+  const [cart, setCart] = useStoredState('rj_cart', []);
+  const [contact, setContact] = useStoredState('rj_contact', { name: '', phone: '' });
+  // Orders placed from this device: [{ id, token }], newest first
+  const [myOrders, setMyOrders] = useStoredState('rj_my_orders', []);
   const [cartOpen, setCartOpen] = useState(false);
   const prevStatus = useRef(null);
 
   const loadInfo = useCallback(() => api.get('/store').then(setInfo).catch(() => {}), []);
-  const loadOrders = useCallback(() => api.get('/orders/mine').then((r) => {
-    setOrders(r.orders);
-    setMinutesPerOrder(r.minutesPerOrder);
-  }).catch(() => {}), []);
+  const loadOrders = useCallback(() => {
+    if (!myOrders.length) return setOrders([]);
+    const tokens = new Map(myOrders.map((o) => [o.id, o.token]));
+    return api.post('/orders/track', { orders: myOrders }).then((r) => {
+      setOrders(r.orders.map((o) => ({ ...o, token: tokens.get(o.id) })));
+      setMinutesPerOrder(r.minutesPerOrder);
+    }).catch(() => {});
+  }, [myOrders]);
+  useEffect(() => { loadOrders(); }, [loadOrders]);
 
   const hasActive = orders.some((o) => ['pending', 'cooking', 'ready'].includes(o.status));
   usePolling(loadInfo, 30000);
@@ -92,23 +98,23 @@ export default function App({ user, setUser, onLogout }) {
     toast(dropped ? 'เพิ่มลงตะกร้าแล้ว (ท็อปปิ้งที่หมดถูกตัดออก)' : 'เพิ่มรายการเดิมลงตะกร้าแล้ว', dropped ? 'info' : 'success');
   };
 
-  const placed = (order) => {
+  const placed = (order, token) => {
     setCartOpen(false);
     setTab('orders');
-    toast(`สั่งสำเร็จ! หมายเลขออเดอร์ ${order.code}`, 'success');
-    loadOrders();
+    toast(`สั่งสำเร็จ! คิวของคุณคือ ${order.code}`, 'success');
+    setMyOrders((list) => [{ id: order.id, token }, ...list].slice(0, 30)); // triggers loadOrders
     loadInfo();
     window.scrollTo({ top: 0 });
   };
 
   const activeOrder = orders.find((o) => ['pending', 'cooking', 'ready'].includes(o.status));
-  const cartProps = { info, cart, setCart, user, onPlaced: placed };
+  const cartProps = { info, cart, setCart, contact, setContact, onPlaced: placed };
 
   return (
     <div className="min-h-dvh bg-speckle">
       <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur border-b border-line">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-          <a href="/"><Brand sub={`สวัสดี ${user.displayName}`} /></a>
+          <a href="/"><Brand sub={contact.name ? `สวัสดี ${contact.name}` : 'Omelette Buffet Pre-order'} /></a>
           <div className="flex items-center gap-2">
             <span className={cx('hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
               store.acceptingOrders ? 'bg-basil-50 text-basil-600' : 'bg-chili-50 text-chili-600')}>
@@ -135,7 +141,7 @@ export default function App({ user, setUser, onLogout }) {
         {tab === 'order' && activeOrder && (
           <button onClick={() => setTab('orders')} className={cx('press w-full mb-4 rounded-2xl p-3.5 flex items-center gap-3 text-left',
             activeOrder.status === 'ready' ? 'bg-basil-500 text-white' : 'bg-ink text-paper')}>
-            <span className="font-display font-bold text-2xl tabular">{activeOrder.code}</span>
+            <span className="font-display font-bold text-2xl tabular">คิว {activeOrder.code}</span>
             <span className="flex-1 text-sm">{activeOrder.status === 'ready' ? 'พร้อมรับแล้ว! มารับได้เลย' : activeOrder.status === 'cooking' ? 'กำลังทอดอยู่...' : `รอคิว · ก่อนหน้า ${activeOrder.ahead} ออเดอร์`}</span>
             <IconChevronRight size={20} />
           </button>
@@ -163,11 +169,6 @@ export default function App({ user, setUser, onLogout }) {
             <Orders orders={orders} minutesPerOrder={minutesPerOrder} store={store} onRefresh={loadOrders} onReorder={reorder} goOrder={() => setTab('order')} />
           </div>
         )}
-        {tab === 'profile' && (
-          <div className="max-w-2xl mx-auto">
-            <Profile user={user} setUser={setUser} orders={orders} onLogout={onLogout} />
-          </div>
-        )}
       </main>
 
       <Modal open={cartOpen} onClose={() => setCartOpen(false)} title={`ตะกร้าของฉัน${cartCount ? ` (${cartCount} จาน)` : ''}`}>
@@ -175,7 +176,7 @@ export default function App({ user, setUser, onLogout }) {
       </Modal>
 
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-paper/95 backdrop-blur border-t border-line safe-bottom">
-        <div className="max-w-md mx-auto grid grid-cols-3 pt-1.5">
+        <div className="max-w-md mx-auto grid grid-cols-2 pt-1.5">
           {TABS.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setTab(id)} className={cx('press relative flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-semibold', tab === id ? 'text-ink' : 'text-ink-mute')}>
               <span className={cx('w-12 h-7 rounded-full flex items-center justify-center', tab === id && 'bg-yolk-200')}><Icon size={20} /></span>

@@ -56,7 +56,7 @@ export default function Staff({ me }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2 className="font-display font-semibold text-2xl">พนักงาน</h2>
-          <p className="text-sm text-night-300">บัญชีที่เข้าหน้าครัวได้{data ? ` · สมาชิกลูกค้าทั้งหมด ${data.customerCount} คน` : ''}</p>
+          <p className="text-sm text-night-300">บัญชีที่เข้าหน้าครัวได้{data ? ` · ลูกค้าทั้งหมด ${data.customerCount} คน (นับจากเบอร์โทร)` : ''}</p>
         </div>
         <Button size="sm" onClick={() => setAdding(true)}><IconPlus size={16} /> เพิ่มพนักงาน</Button>
       </div>

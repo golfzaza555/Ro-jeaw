@@ -19,7 +19,7 @@ function PrintTicket({ order }) {
   return (
     <div id="print-area">
       <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 14 }}>ไข่เจียว TonyStark 001</div>
-      <div style={{ textAlign: 'center', fontSize: 32, fontWeight: 800, margin: '4px 0' }}>{order.code}</div>
+      <div style={{ textAlign: 'center', fontSize: 32, fontWeight: 800, margin: '4px 0' }}>คิว {order.code}</div>
       <div>ลูกค้า: {order.name} ({order.phone})</div>
       <div>นัดรับ: {clock(order.pickupAt)} น. · สั่ง {clock(order.createdAt)}</div>
       <hr />

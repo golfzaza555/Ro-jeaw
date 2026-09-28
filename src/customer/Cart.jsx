@@ -21,7 +21,7 @@ function pickupTime(choice, custom, waitMinutes) {
   return Date.now() + Math.max(choice, waitMinutes) * 60000;
 }
 
-export default function Cart({ info, cart, setCart, user, onPlaced }) {
+export default function Cart({ info, cart, setCart, contact, setContact, onPlaced }) {
   const toast = useToast();
   const { menu, store, queue } = info;
   const tmap = useMemo(() => toppingMap(menu), [menu]);
@@ -31,8 +31,8 @@ export default function Cart({ info, cart, setCart, user, onPlaced }) {
 
   const [choice, setChoice] = useState('asap');
   const [custom, setCustom] = useState('');
-  const [name, setName] = useState(user.displayName);
-  const [phone, setPhone] = useState(user.phone);
+  const [name, setName] = useState(contact.name);
+  const [phone, setPhone] = useState(contact.phone);
   const [note, setNote] = useState('');
   const [payment, setPayment] = useState('cash');
   const [busy, setBusy] = useState(false);
@@ -46,13 +46,14 @@ export default function Cart({ info, cart, setCart, user, onPlaced }) {
     if (!pickupAt) return toast('กรุณาเลือกเวลารับอาหาร', 'error');
     setBusy(true);
     try {
-      const { order } = await api.post('/orders', {
+      const { order, token } = await api.post('/orders', {
         items: cart.map(({ eggId, baseId, styleId, toppings, qty }) => ({ eggId, baseId, styleId, toppings, qty })),
         pickupAt, name, phone, note, paymentMethod: payment,
       });
+      setContact({ name: name.trim(), phone });
       setCart([]);
       setNote('');
-      onPlaced(order);
+      onPlaced(order, token);
     } catch (e) {
       toast(e.message, 'error');
     } finally {
@@ -117,14 +118,19 @@ export default function Cart({ info, cart, setCart, user, onPlaced }) {
         {eta && <p className="text-sm text-basil-600 font-semibold mt-2">รับได้ประมาณ {clock(eta)} น. · คิวตอนนี้ {queue.active} ออเดอร์</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
-        <label className="block"><span className="text-sm font-medium">ชื่อผู้รับ</span>
-          <input className={cx(inputCls(), 'mt-1')} value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-        </label>
-        <label className="block"><span className="text-sm font-medium">เบอร์โทร</span>
-          <input className={cx(inputCls(), 'mt-1')} value={phone} inputMode="tel" maxLength={10}
-            onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} />
-        </label>
+      <div>
+        <p className="font-semibold mb-2">ข้อมูลผู้สั่ง</p>
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="block"><span className="text-sm font-medium">ชื่อ</span>
+            <input className={cx(inputCls(), 'mt-1')} value={name} onChange={(e) => setName(e.target.value)} maxLength={40}
+              placeholder="เช่น ต้น" autoComplete="given-name" />
+          </label>
+          <label className="block"><span className="text-sm font-medium">เบอร์โทร</span>
+            <input className={cx(inputCls(), 'mt-1')} value={phone} inputMode="tel" maxLength={10} placeholder="08xxxxxxxx" autoComplete="tel"
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} />
+          </label>
+        </div>
+        <p className="text-xs text-ink-soft mt-1.5">ไม่ต้องสมัครสมาชิก · ร้านจะเรียกคิวตามหมายเลขที่ได้รับ</p>
       </div>
 
       <div>

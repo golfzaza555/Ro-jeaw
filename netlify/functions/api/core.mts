@@ -84,7 +84,8 @@ export async function verifyPassword(pw: string, stored: string): Promise<boolea
   return expected.length === key.length && timingSafeEqual(expected, key);
 }
 
-const sha256 = (t: string) => createHash("sha256").update(t).digest("hex");
+export const sha256 = (t: string) => createHash("sha256").update(t).digest("hex");
+export const newToken = () => randomBytes(24).toString("base64url");
 
 export async function createSession(userId: number): Promise<string> {
   const token = randomBytes(32).toString("base64url");

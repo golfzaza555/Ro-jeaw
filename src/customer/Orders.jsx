@@ -50,10 +50,10 @@ function Tracker({ order, store, minutesPerOrder, onChanged }) {
   const ready = order.status === 'ready';
 
   const cancel = async () => {
-    if (!window.confirm(`ยกเลิกออเดอร์ ${order.code}?`)) return;
+    if (!window.confirm(`ยกเลิกคิว ${order.code}?`)) return;
     setBusy(true);
     try {
-      await api.post(`/orders/${order.id}/cancel`);
+      await api.post(`/orders/${order.id}/cancel`, { token: order.token });
       toast('ยกเลิกออเดอร์แล้ว', 'info');
       onChanged();
     } catch (e) {
@@ -68,8 +68,9 @@ function Tracker({ order, store, minutesPerOrder, onChanged }) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className={cx('text-xs font-semibold', ready ? 'text-white/80' : 'text-ink-soft')}>หมายเลขออเดอร์</p>
-            <p className="font-display font-bold text-5xl leading-none mt-1 tabular">{order.code}</p>
+            <p className={cx('text-xs font-semibold', ready ? 'text-white/80' : 'text-ink-soft')}>หมายเลขคิว</p>
+            <p className="font-display font-bold text-6xl leading-none mt-1 tabular">{order.code}</p>
+            <p className={cx('text-sm mt-1', ready ? 'text-white/80' : 'text-ink-soft')}>{order.name}</p>
           </div>
           <div className="text-right">
             <p className={cx('text-xs', ready ? 'text-white/80' : 'text-ink-soft')}>นัดรับ</p>
@@ -129,7 +130,7 @@ function RateModal({ order, onClose, onDone }) {
   const submit = async () => {
     setBusy(true);
     try {
-      await api.post(`/orders/${order.id}/rate`, { rating, review });
+      await api.post(`/orders/${order.id}/rate`, { token: order.token, rating, review });
       toast('ขอบคุณสำหรับรีวิว!', 'success');
       onDone();
     } catch (e) {
@@ -139,7 +140,7 @@ function RateModal({ order, onClose, onDone }) {
     }
   };
   return (
-    <Modal open={!!order} onClose={onClose} title={`ให้คะแนน ${order?.code || ''}`}>
+    <Modal open={!!order} onClose={onClose} title={`ให้คะแนนคิว ${order?.code || ''}`}>
       <div className="flex justify-center"><StarRow value={rating} onChange={setRating} size={36} /></div>
       <textarea value={review} onChange={(e) => setReview(e.target.value)} rows={3} maxLength={300} placeholder="บอกเราหน่อย อร่อยไหม? (ไม่บังคับ)"
         className="mt-4 w-full rounded-xl border-2 border-line bg-paper px-3.5 py-2.5 outline-none focus:border-yolk-400 resize-none" />
@@ -188,7 +189,7 @@ export default function Orders({ orders, minutesPerOrder, store, onRefresh, onRe
               <li key={o.id} className="rounded-2xl bg-paper shadow-soft p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <p className="font-semibold">{o.code} <span className="text-ink-soft font-normal text-sm">· {dateTh(o.createdAt)} {clock(o.createdAt)}</span></p>
+                    <p className="font-semibold">คิว {o.code} <span className="text-ink-soft font-normal text-sm">· {dateTh(o.createdAt)} {clock(o.createdAt)}</span></p>
                     <p className={cx('text-xs font-semibold', o.status === 'cancelled' ? 'text-chili-600' : 'text-basil-600')}>
                       {o.status === 'cancelled' ? `ยกเลิก${o.cancelReason ? ` · ${o.cancelReason}` : ''}` : <span className="inline-flex items-center gap-1"><IconCheck size={13} strokeWidth={3} /> รับแล้ว</span>}
                     </p>
