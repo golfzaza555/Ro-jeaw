@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ไข่เจียว TonyStark 001 | ระบบพรีออเดอร์บุฟเฟต์</title>
+<link rel="icon" href="data:image/svg&#43;xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%B3%3C/text%3E%3C/svg%3E" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;family=Noto&#43;Sans&#43;Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js" crossorigin></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"Noto Sans Thai"', '"Kanit"', 'sans-serif'],
+        },
+        colors: {
+          amber: {
+            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+            400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+            800: '#92400e', 900: '#78350f',
+          },
+          charcoal: {
+            50: '#f6f6f7', 100: '#e2e3e5', 200: '#c5c6cb', 300: '#9a9ca4',
+            400: '#6b6e78', 500: '#4a4d57', 600: '#383a43', 700: '#2b2d34',
+            800: '#1e1f24', 900: '#141519', 950: '#0c0d10',
+          },
+        },
+        boxShadow: {
+          warm: '0 10px 30px -10px rgba(180, 83, 9, 0.25)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { font-family: 'Noto Sans Thai', 'Kanit', sans-serif; background:#fdf8ef; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #e7c98f; border-radius: 8px; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(.92) } to { opacity: 1; transform: scale(1) } }
+  @keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
+  @keyframes slideOutRight { from { transform: translateX(0) } to { transform: translateX(100%) } }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-12px) scale(.95) } to { opacity: 1; transform: translateY(0) scale(1) } }
+  @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.45) } 70% { box-shadow: 0 0 0 12px rgba(239,68,68,0) } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0) } }
+  @keyframes softBob { 0%,100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-4px) rotate(2deg) } }
+  @keyframes shimmerNew { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+
+  .animate-fadeIn { animation: fadeIn .25s ease-out both; }
+  .animate-slideUp { animation: slideUp .35s cubic-bezier(.22,1,.36,1) both; }
+  .animate-slideDown { animation: slideDown .3s cubic-bezier(.22,1,.36,1) both; }
+  .animate-scaleIn { animation: scaleIn .28s cubic-bezier(.22,1,.36,1) both; }
+  .animate-slideInRight { animation: slideInRight .32s cubic-bezier(.22,1,.36,1) both; }
+  .animate-toastIn { animation: toastIn .3s cubic-bezier(.22,1,.36,1) both; }
+  .animate-pulseRing { animation: pulseRing 1.6s infinite; }
+  .animate-bob { animation: softBob 3s ease-in-out infinite; }
+  .animate-newcard { animation: shimmerNew 1.4s ease-in-out 2, slideDown .35s cubic-bezier(.22,1,.36,1) both; background-size: 200% 100%; }
+
+  .btn-press { transition: transform .15s ease, filter .15s ease, box-shadow .15s ease; }
+  .btn-press:active { transform: scale(.96); }
+  .chip-transition { transition: all .18s ease; }
+</style>
+</head>
+<body class="text-charcoal-800">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ============================== ICONS ============================== */
+/* Small hand-built, dependency-free line icons (lucide-inspired) so the
+   whole app runs from three CDN scripts with zero bundler / npm install. */
+const Ic = (props) => {
+  const { children, size = 20, className = "", strokeWidth = 2, ...rest } = props;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
+      className={className} {...rest}>
+      {children}
+    </svg>
+  );
+};
+const IconSearch = (p) => <Ic {...p}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Ic>;
+const IconX = (p) => <Ic {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Ic>;
+const IconPlus = (p) => <Ic {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Ic>;
+const IconCheck = (p) => <Ic {...p}><polyline points="20 6 9 17 4 12" /></Ic>;
+const IconCheckCircle = (p) => <Ic {...p}><circle cx="12" cy="12" r="9" /><polyline points="8.5 12.5 11 15 15.5 9.5" /></Ic>;
+const IconClock = (p) => <Ic {...p}><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15.5 14" /></Ic>;
+const IconChevronLeft = (p) => <Ic {...p}><polyline points="15 18 9 12 15 6" /></Ic>;
+const IconChevronRight = (p) => <Ic {...p}><polyline points="9 18 15 12 9 6" /></Ic>;
+const IconUser = (p) => <Ic {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7" /></Ic>;
+const IconPhone = (p) => <Ic {...p}><path d="M6.5 3h3l1.5 4.5-2 1.5c1 2.5 2.5 4 5 5l1.5-2 4.5 1.5v3c0 1.1-.9 2-2 2-8 0-14-6-14-14 0-1.1.9-2 2-2Z" /></Ic>;
+const IconMessage = (p) => <Ic {...p}><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2Z" /></Ic>;
+const IconStore = (p) => <Ic {...p}><path d="M4 9l1-5h14l1 5" /><rect x="4" y="9" width="16" height="11" rx="1.5" /><path d="M9 20v-6h6v6" /></Ic>;
+const IconSettings = (p) => <Ic {...p}><line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" fill="currentColor" /><line x1="4" y1="12" x2="20" y2="12" /><circle cx="16" cy="12" r="2" fill="currentColor" /><line x1="4" y1="18" x2="20" y2="18" /><circle cx="11" cy="18" r="2" fill="currentColor" /></Ic>;
+const IconChart = (p) => <Ic {...p}><line x1="5" y1="20" x2="5" y2="14" /><line x1="12" y1="20" x2="12" y2="6" /><line x1="19" y1="20" x2="19" y2="11" /><line x1="3" y1="21" x2="21" y2="21" /></Ic>;
+const IconTrend = (p) => <Ic {...p}><polyline points="3 17 9.5 10.5 14 15 21 6" /><polyline points="15 6 21 6 21 12" /></Ic>;
+const IconAlert = (p) => <Ic {...p}><circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.2" r="1" fill="currentColor" stroke="none" /></Ic>;
+const IconPackage = (p) => <Ic {...p}><rect x="3.5" y="8" width="17" height="12" rx="1.5" /><polyline points="3.5 8 12 3.5 20.5 8" /><line x1="12" y1="8" x2="12" y2="20" /></Ic>;
+const IconFlame = (p) => <Ic {...p}><path d="M12 3c1.2 3.2-2 4.5-2 7.7a2.6 2.6 0 0 0 5.2 0c0-1.4-.7-2.2-.7-3.7 1.7 1.3 3 3.6 3 6.2A5.5 5.5 0 0 1 6 13.2C6 8.7 9 6.3 12 3Z" /></Ic>;
+const IconChefHat = (p) => <Ic {...p}><path d="M7 13.5V19a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-5.5" /><path d="M6 10.5a4 4 0 0 1 3-8 3.5 3.5 0 0 1 3-1.7A3.5 3.5 0 0 1 15 2.5a4 4 0 0 1 3 8 3 3 0 0 1-1 5.8H7a3 3 0 0 1-1-5.8Z" /></Ic>;
+const IconLock = (p) => <Ic {...p}><rect x="4.5" y="11" width="15" height="9" rx="1.5" /><path d="M8 11V7.5a4 4 0 0 1 8 0V11" /></Ic>;
+const IconUnlock = (p) => <Ic {...p}><rect x="4.5" y="11" width="15" height="9" rx="1.5" /><path d="M8 11V7.5a4 4 0 0 1 7.4-2.1" /></Ic>;
+const IconSparkle = (p) => <Ic {...p}><path d="M12 2.5l1.7 5.3 5.3 1.7-5.3 1.7L12 16.5l-1.7-5.3L5 9.5l5.3-1.7Z" /><path d="M19 14.5l.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8Z" /></Ic>;
+const IconRotate = (p) => <Ic {...p}><path d="M3.5 12a8.5 8.5 0 1 1 2.7 6.2" /><polyline points="3 16.5 3.5 12 8 12.5" /></Ic>;
+const IconStar = (p) => <Ic {...p}><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8-4.3-4.1 5.9-.9Z" /></Ic>;
+
+/* ============================== DATA ============================== */
+const money = (n) => `฿${n.toLocaleString('th-TH')}`;
+
+const EGG_OPTIONS = [
+  { id: 1, label: '1 ฟอง', sub: '1 Egg', price: 35 },
+  { id: 2, label: '2 ฟอง', sub: '2 Eggs', price: 45, popular: true },
+  { id: 3, label: '3 ฟอง', sub: '3 Eggs', price: 55 },
+];
+const BASE_OPTIONS = [
+  { id: 'rice', label: 'พร้อมข้าวสวย', sub: 'With Jasmine Rice', delta: 0 },
+  { id: 'noRice', label: 'ไข่เจียวอย่างเดียว', sub: 'Omelette Only', delta: -5 },
+];
+const STYLE_OPTIONS = [
+  { id: 'soft', label: 'นุ่มฟู', sub: 'Soft & Fluffy', tone: 'bg-amber-100 border-amber-300' },
+  { id: 'standard', label: 'กำลังดี', sub: 'Standard', tone: 'bg-amber-200 border-amber-400' },
+  { id: 'crispy', label: 'กรอบฟู', sub: 'Super Crispy', tone: 'bg-amber-300 border-amber-600' },
+];
+
+const TOPPING_CATEGORIES = [
+  {
+    key: 'meat', label: 'เนื้อสัตว์ / โปรตีน', sub: 'Meats & Proteins', emoji: '🍖',
+    items: [
+      { id: 'pork', name: 'หมูสับ', nameEn: 'Minced Pork', emoji: '🥩', price: 0 },
+      { id: 'sausage', name: 'ไส้กรอก', nameEn: 'Sausage', emoji: '🌭', price: 0 },
+      { id: 'crab', name: 'ปูอัด', nameEn: 'Crab Stick', emoji: '🦀', price: 0 },
+      { id: 'shrimp', name: 'กุ้งสับ', nameEn: 'Minced Shrimp', emoji: '🍤', price: 10 },
+      { id: 'ham', name: 'แฮม', nameEn: 'Ham', emoji: '🍗', price: 0 },
+    ],
+  },
+  {
+    key: 'veggie', label: 'ผัก', sub: 'Veggies', emoji: '🌿',
+    items: [
+      { id: 'scallion', name: 'ต้นหอม', nameEn: 'Spring Onion', emoji: '🌱', price: 0 },
+      { id: 'onion', name: 'หอมใหญ่', nameEn: 'Onion', emoji: '🧅', price: 0 },
+      { id: 'tomato', name: 'มะเขือเทศ', nameEn: 'Tomato', emoji: '🍅', price: 0 },
+      { id: 'chili', name: 'พริกขี้หนู', nameEn: 'Chili', emoji: '🌶️', price: 0 },
+      { id: 'corn', name: 'ข้าวโพดหวาน', nameEn: 'Sweet Corn', emoji: '🌽', price: 0 },
+      { id: 'enoki', name: 'เห็ดเข็มทอง', nameEn: 'Enoki Mushroom', emoji: '🍄', price: 0 },
+      { id: 'basil', name: 'ใบโหระพา', nameEn: 'Basil', emoji: '🍃', price: 0 },
+    ],
+  },
+  {
+    key: 'special', label: 'ท็อปปิ้งพิเศษ', sub: 'Special Toppings', emoji: '✨',
+    items: [
+      { id: 'cheese', name: 'ชีสยืด', nameEn: 'Mozzarella Cheese', emoji: '🧀', price: 10 },
+      { id: 'chilipaste', name: 'พริกเผา', nameEn: 'Chili Paste', emoji: '🔥', price: 0 },
+    ],
+  },
+];
+const ALL_TOPPINGS = TOPPING_CATEGORIES.flatMap((c) => c.items);
+const TOPPING_MAP = Object.fromEntries(ALL_TOPPINGS.map((t) => [t.id, t]));
+const FAVORITES = ['pork', 'scallion', 'cheese'];
+
+const QUICK_NOTES = ['ขอพริกน้ำปลาเยอะๆ', 'ไม่ใส่น้ำมันเยอะ', 'ขอสุกเป็นพิเศษ', 'แยกใส่กล่อง'];
+const PICKUP_QUICK = [10, 15, 30];
+
+const STATUS_META = {
+  pending: { label: 'รอดำเนินการ', emoji: '⏳', col: 'amber' },
+  cooking: { label: 'กำลังทอด', emoji: '🍳', col: 'orange' },
+  ready: { label: 'พร้อมรับ', emoji: '📦', col: 'emerald' },
+  completed: { label: 'รับแล้ว', emoji: '✅', col: 'slate' },
+};
+const NEXT_STATUS = { pending: 'cooking', cooking: 'ready', ready: 'completed' };
+const NEXT_LABEL = { pending: 'เริ่มทอด', cooking: 'พร้อมรับ', ready: 'รับแล้ว' };
+
+function seedOrders() {
+  const now = Date.now();
+  const mk = (over) => ({
+    id: `TS-0${over.n}`, status: over.status, name: over.name, phone: over.phone,
+    eggId: over.eggId, baseId: over.baseId, styleId: over.styleId, toppings: over.toppings,
+    note: over.note || '', total: over.total,
+    createdAt: now - over.agoMin * 60000, pickupTime: now + over.pickupInMin * 60000,
+    completedAt: over.status === 'completed' ? now - 5 * 60000 : null,
+  });
+  return [
+    mk({ n: 40, status: 'completed', name: 'คุณดี', phone: '081-234-5566', eggId: 2, baseId: 'rice', styleId: 'standard', toppings: ['ham', 'corn'], total: 45, agoMin: 25, pickupInMin: -10 }),
+    mk({ n: 41, status: 'pending', name: 'คุณเอ', phone: '089-111-2222', eggId: 2, baseId: 'rice', styleId: 'standard', toppings: ['pork', 'scallion', 'cheese'], note: 'ขอพริกน้ำปลาเยอะๆ', total: 55, agoMin: 3, pickupInMin: 8 }),
+    mk({ n: 42, status: 'cooking', name: 'คุณบี', phone: '086-333-4444', eggId: 1, baseId: 'noRice', styleId: 'crispy', toppings: ['sausage', 'onion', 'corn'], total: 30, agoMin: 9, pickupInMin: -2 }),
+    mk({ n: 43, status: 'ready', name: 'คุณซี', phone: '090-555-7777', eggId: 3, baseId: 'rice', styleId: 'soft', toppings: ['shrimp', 'tomato', 'basil', 'cheese'], note: 'ไม่ใส่น้ำมันเยอะ', total: 75, agoMin: 14, pickupInMin: 1 }),
+  ];
+}
+
+function useLocalStorage(key, initial) {
+  const [value, setValue] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : initial;
+    } catch (e) { return initial; }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }, [key, value]);
+  return [value, setValue];
+}
+
+function playBeep() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.start(); o.stop(ctx.currentTime + 0.32);
+    o.onended = () => ctx.close();
+  } catch (e) {}
+}
+
+function fmtCountdown(ms) {
+  const overdue = ms < 0;
+  const abs = Math.abs(ms);
+  const totalSec = Math.floor(abs / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  const txt = `${m}:${String(s).padStart(2, '0')}`;
+  return { overdue, txt };
+}
+
+/* ============================== SMALL UI KIT ============================== */
+function Toast({ toast, onClose }) {
+  const tone = toast.type === 'error'
+    ? 'bg-red-600'
+    : toast.type === 'info'
+    ? 'bg-charcoal-800'
+    : 'bg-emerald-600';
+  return (
+    <div className={`animate-toastIn ${tone} text-white rounded-xl shadow-lg px-4 py-3 flex items-start gap-2 min-w-[240px] max-w-[320px]`}>
+      <span className="text-lg leading-none mt-0.5">{toast.emoji || '✅'}</span>
+      <p className="text-sm font-medium leading-snug flex-1">{toast.message}</p>
+      <button onClick={onClose} className="opacity-70 hover:opacity-100 shrink-0"><IconX size={16} /></button>
+    </div>
+  );
+}
+function ToastStack({ toasts, dismiss }) {
+  return (
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-[100] flex flex-col gap-2 items-end pointer-events-none">
+      {toasts.map((t) => (
+        <div key={t.id} className="pointer-events-auto w-full sm:w-auto">
+          <Toast toast={t} onClose={() => dismiss(t.id)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Switch({ checked, onChange, label }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`btn-press relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 shrink-0 ${checked ? 'bg-emerald-500' : 'bg-charcoal-300'}`}
+      aria-label={label}
+    >
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+    </button>
+  );
+}
+
+function Pill({ children, className = '' }) {
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${className}`}>{children}</span>;
+}
+
+function PrimaryButton({ children, className = '', ...rest }) {
+  return (
+    <button
+      className={`btn-press inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-400 text-charcoal-900 font-bold px-5 py-3 shadow-warm disabled:opacity-40 disabled:pointer-events-none ${className}`}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+function GhostButton({ children, className = '', ...rest }) {
+  return (
+    <button
+      className={`btn-press inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-charcoal-200 hover:border-charcoal-400 bg-white text-charcoal-700 font-semibold px-5 py-3 disabled:opacity-40 disabled:pointer-events-none ${className}`}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ============================== NAVBAR ============================== */
+function NavBar({ role, setRole, storeOpen, onOpenAdmin, pendingCount }) {
+  return (
+    <header className="sticky top-0 z-30 bg-charcoal-900/95 backdrop-blur text-white shadow-lg">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-xl shadow-warm animate-bob">🍳</div>
+          <div className="leading-tight">
+            <p className="font-bold text-base sm:text-lg tracking-tight">ไข่เจียว <span className="text-amber-400">TonyStark</span> 001</p>
+            <p className="text-[11px] text-charcoal-300 -mt-0.5">Omelette Buffet Pre-order System</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Pill className={storeOpen ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}>
+            <span className={`w-1.5 h-1.5 rounded-full ${storeOpen ? 'bg-emerald-400' : 'bg-red-400'}`} />
+            {storeOpen ? 'เปิดร้าน' : 'ปิดร้าน'}
+          </Pill>
+
+          <div className="flex bg-charcoal-800 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setRole('customer')}
+              className={`btn-press px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 ${role === 'customer' ? 'bg-amber-500 text-charcoal-900' : 'text-charcoal-300 hover:text-white'}`}
+            >
+              <IconUser size={15} /> ลูกค้า
+            </button>
+            <button
+              onClick={() => setRole('kitchen')}
+              className={`btn-press relative px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 ${role === 'kitchen' ? 'bg-amber-500 text-charcoal-900' : 'text-charcoal-300 hover:text-white'}`}
+            >
+              <IconChefHat size={15} /> ครัว
+              {pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 min-w-[18px] h-[18px] flex items-center justify-center">{pendingCount}</span>
+              )}
+            </button>
+          </div>
+
+          <button onClick={onOpenAdmin} className="btn-press w-9 h-9 flex items-center justify-center rounded-xl bg-charcoal-800 hover:bg-charcoal-700 text-charcoal-200" aria-label="ตั้งค่าร้าน">
+            <IconSettings size={17} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ============================== CUSTOMER: STEP DOTS ============================== */
+const STEP_LABELS = ['ไข่ & ฐาน', 'ท็อปปิ้ง', 'เวลารับ', 'สรุปออเดอร์'];
+function StepDots({ step }) {
+  return (
+    <div className="flex items-center justify-center gap-2 mb-5">
+      {STEP_LABELS.map((label, i) => {
+        const n = i + 1;
+        const active = n === step;
+        const done = n < step;
+        return (
+          <div key={label} className="flex items-center gap-2">
+            <div className="flex flex-col items-center gap-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ${
+                done ? 'bg-emerald-500 text-white' : active ? 'bg-amber-500 text-charcoal-900' : 'bg-charcoal-200 text-charcoal-500'
+              }`}>
+                {done ? <IconCheck size={14} /> : n}
+              </div>
+              <span className={`text-[10px] font-medium hidden sm:block ${active ? 'text-charcoal-800' : 'text-charcoal-400'}`}>{label}</span>
+            </div>
+            {n < STEP_LABELS.length && <div className={`w-5 sm:w-10 h-0.5 rounded ${done ? 'bg-emerald-400' : 'bg-charcoal-200'}`} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================== STEP 1: EGG & BASE ============================== */
+function StepEggBase({ form, setForm }) {
+  return (
+    <div className="animate-slideUp space-y-6">
+      <section>
+        <h3 className="font-bold text-lg mb-1">🥚 จำนวนไข่</h3>
+        <p className="text-sm text-charcoal-400 mb-3">Egg count</p>
+        <div className="grid grid-cols-3 gap-3">
+          {EGG_OPTIONS.map((opt) => {
+            const active = form.eggId === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => setForm((f) => ({ ...f, eggId: opt.id }))}
+                className={`chip-transition relative rounded-2xl border-2 p-4 text-center btn-press ${
+                  active ? 'border-amber-500 bg-amber-50 shadow-warm' : 'border-charcoal-200 bg-white hover:border-amber-300'
+                }`}
+              >
+                {opt.popular && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">ยอดนิยม</span>
+                )}
+                <p className="text-2xl">{'🥚'.repeat(opt.id)}</p>
+                <p className="font-bold mt-1">{opt.label}</p>
+                <p className="text-xs text-charcoal-400">{opt.sub}</p>
+                <p className="text-amber-600 font-bold mt-1">{money(opt.price)}</p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-lg mb-1">🍚 ฐานเสิร์ฟ</h3>
+        <p className="text-sm text-charcoal-400 mb-3">Base</p>
+        <div className="grid grid-cols-2 gap-3">
+          {BASE_OPTIONS.map((opt) => {
+            const active = form.baseId === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => setForm((f) => ({ ...f, baseId: opt.id }))}
+                className={`chip-transition rounded-2xl border-2 p-4 text-left btn-press ${
+                  active ? 'border-amber-500 bg-amber-50 shadow-warm' : 'border-charcoal-200 bg-white hover:border-amber-300'
+                }`}
+              >
+                <p className="font-bold">{opt.label}</p>
+                <p className="text-xs text-charcoal-400">{opt.sub}</p>
+                <p className={`text-sm font-bold mt-1 ${opt.delta < 0 ? 'text-emerald-600' : 'text-charcoal-400'}`}>
+                  {opt.delta === 0 ? 'รวมอยู่แล้ว' : `${opt.delta}฿`}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-lg mb-1">🔥 ความกรอบของไข่เจียว</h3>
+        <p className="text-sm text-charcoal-400 mb-3">Egg style / crispiness</p>
+        <div className="grid grid-cols-3 gap-3">
+          {STYLE_OPTIONS.map((opt) => {
+            const active = form.styleId === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => setForm((f) => ({ ...f, styleId: opt.id }))}
+                className={`chip-transition rounded-2xl border-2 p-3 text-center btn-press ${opt.tone} ${active ? 'ring-2 ring-amber-600 ring-offset-2' : 'opacity-70 hover:opacity-100'}`}
+              >
+                <p className="font-bold text-sm">{opt.label}</p>
+                <p className="text-[11px] text-charcoal-500">{opt.sub}</p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ============================== STEP 2: TOPPINGS ============================== */
+function StepToppings({ form, setForm, stock }) {
+  const [search, setSearch] = useState('');
+  const toggle = (id) => {
+    setForm((f) => {
+      const has = f.toppings.includes(id);
+      return { ...f, toppings: has ? f.toppings.filter((x) => x !== id) : [...f.toppings, id] };
+    });
+  };
+  const selectFavorites = () => setForm((f) => ({ ...f, toppings: Array.from(new Set([...f.toppings, ...FAVORITES.filter((id) => stock[id] !== false)])) }));
+  const clearAll = () => setForm((f) => ({ ...f, toppings: [] }));
+
+  const q = search.trim().toLowerCase();
+  const filteredCats = TOPPING_CATEGORIES.map((cat) => ({
+    ...cat,
+    items: cat.items.filter((it) => !q || it.name.toLowerCase().includes(q) || it.nameEn.toLowerCase().includes(q)),
+  })).filter((cat) => cat.items.length > 0);
+
+  return (
+    <div className="animate-slideUp space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 className="font-bold text-lg">🧑‍🍳 เลือกท็อปปิ้งบุฟเฟต์</h3>
+          <p className="text-sm text-charcoal-400">เลือกได้ไม่จำกัด • เลือกแล้ว {form.toppings.length} รายการ</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={selectFavorites} className="btn-press text-xs font-semibold px-3 py-2 rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-200">⭐ สุดโปรด</button>
+          <button onClick={clearAll} className="btn-press text-xs font-semibold px-3 py-2 rounded-xl bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200">ล้างทั้งหมด</button>
+        </div>
+      </div>
+
+      <div className="relative">
+        <IconSearch size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal-400" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ค้นหาท็อปปิ้ง..."
+          className="w-full rounded-xl border-2 border-charcoal-200 focus:border-amber-400 outline-none pl-10 pr-9 py-2.5 text-sm bg-white"
+        />
+        {search && (
+          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400 hover:text-charcoal-700">
+            <IconX size={15} />
+          </button>
+        )}
+      </div>
+
+      {filteredCats.length === 0 && <p className="text-center text-sm text-charcoal-400 py-8">ไม่พบท็อปปิ้งที่ค้นหา</p>}
+
+      {filteredCats.map((cat) => (
+        <div key={cat.key}>
+          <p className="text-xs font-bold text-charcoal-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <span>{cat.emoji}</span>{cat.label} <span className="font-normal normal-case text-charcoal-400">· {cat.sub}</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {cat.items.map((it) => {
+              const active = form.toppings.includes(it.id);
+              const out = stock[it.id] === false;
+              return (
+                <button
+                  key={it.id}
+                  disabled={out}
+                  onClick={() => toggle(it.id)}
+                  className={`chip-transition btn-press flex items-center gap-1.5 rounded-full border-2 pl-2.5 pr-3 py-2 text-sm font-medium ${
+                    out
+                      ? 'border-charcoal-100 bg-charcoal-50 text-charcoal-300 line-through cursor-not-allowed'
+                      : active
+                      ? 'border-amber-500 bg-amber-500 text-white shadow'
+                      : 'border-charcoal-200 bg-white text-charcoal-700 hover:border-amber-300'
+                  }`}
+                >
+                  <span>{it.emoji}</span>
+                  <span>{it.name}</span>
+                  {it.price > 0 && !out && <span className={`text-xs ${active ? 'text-amber-100' : 'text-amber-600'}`}>+{it.price}฿</span>}
+                  {out && <span className="text-[10px]">หมด</span>}
+                  {active && !out && <IconCheck size={13} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================== STEP 3: PICKUP & CONTACT ============================== */
+function StepPickup({ form, setForm }) {
+  const setQuick = (min) => {
+    const t = Date.now() + min * 60000;
+    setForm((f) => ({ ...f, pickupQuick: min, pickupCustom: '', pickupTime: t }));
+  };
+  const setCustom = (value) => {
+    let t = null;
+    if (value) {
+      const [h, m] = value.split(':').map(Number);
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1);
+      t = d.getTime();
+    }
+    setForm((f) => ({ ...f, pickupQuick: null, pickupCustom: value, pickupTime: t }));
+  };
+  const addNote = (txt) => setForm((f) => ({ ...f, note: f.note ? `${f.note}, ${txt}` : txt }));
+
+  return (
+    <div className="animate-slideUp space-y-6">
+      <section>
+        <h3 className="font-bold text-lg mb-1">⏰ เวลารับอาหาร</h3>
+        <p className="text-sm text-charcoal-400 mb-3">Pickup time</p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {PICKUP_QUICK.map((min) => (
+            <button
+              key={min}
+              onClick={() => setQuick(min)}
+              className={`btn-press rounded-xl border-2 px-4 py-2.5 font-semibold text-sm ${
+                form.pickupQuick === min ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-charcoal-200 bg-white hover:border-amber-300'
+              }`}
+            >
+              อีก {min} นาที
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-charcoal-500">หรือเลือกเวลาเอง:</span>
+          <input
+            type="time"
+            value={form.pickupCustom}
+            onChange={(e) => setCustom(e.target.value)}
+            className="rounded-xl border-2 border-charcoal-200 focus:border-amber-400 outline-none px-3 py-2 text-sm"
+          />
+        </div>
+        {form.pickupTime && (
+          <p className="text-sm text-emerald-600 font-semibold mt-2">
+            ✅ รับได้ประมาณ {new Date(form.pickupTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h3 className="font-bold text-lg mb-3">📇 ข้อมูลติดต่อ</h3>
+        <div className="space-y-3">
+          <div className="relative">
+            <IconUser size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal-400" />
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="ชื่อลูกค้า"
+              className="w-full rounded-xl border-2 border-charcoal-200 focus:border-amber-400 outline-none pl-10 pr-4 py-3 text-sm"
+            />
+          </div>
+          <div className="relative">
+            <IconPhone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal-400" />
+            <input
+              value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9-]/g, '') }))}
+              placeholder="เบอร์โทรศัพท์"
+              className="w-full rounded-xl border-2 border-charcoal-200 focus:border-amber-400 outline-none pl-10 pr-4 py-3 text-sm"
+            />
+          </div>
+          <div className="relative">
+            <IconMessage size={16} className="absolute left-3.5 top-3.5 text-charcoal-400" />
+            <textarea
+              value={form.note}
+              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              placeholder="คำขอพิเศษ (ถ้ามี)"
+              rows={2}
+              className="w-full rounded-xl border-2 border-charcoal-200 focus:border-amber-400 outline-none pl-10 pr-4 py-3 text-sm resize-none"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_NOTES.map((txt) => (
+              <button key={txt} onClick={() => addNote(txt)} className="btn-press text-xs font-medium px-3 py-1.5 rounded-full bg-charcoal-100 hover:bg-amber-100 text-charcoal-600 hover:text-amber-700">
+                + {txt}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ============================== STEP 4: SUMMARY ============================== */
+function StepSummary({ form, pricing }) {
+  const egg = EGG_OPTIONS.find((e) => e.id === form.eggId);
+  const base = BASE_OPTIONS.find((b) => b.id === form.baseId);
+  const style = STYLE_OPTIONS.find((s) => s.id === form.styleId);
+  return (
+    <div className="animate-slideUp space-y-4">
+      <h3 className="font-bold text-lg">🧾 สรุปออเดอร์</h3>
+      <div className="rounded-2xl border-2 border-charcoal-100 bg-white divide-y divide-charcoal-100 overflow-hidden">
+        <div className="p-4 flex items-center justify-between">
+          <div>
+            <p className="font-bold">{egg ? egg.label : '-'} · {base ? base.label : '-'}</p>
+            <p className="text-xs text-charcoal-400">ความกรอบ: {style ? style.label : '-'}</p>
+          </div>
+          <p className="font-bold text-amber-600">{money((egg ? egg.price : 0) + (base ? base.delta : 0))}</p>
+        </div>
+        <div className="p-4">
+          <p className="text-xs font-bold text-charcoal-500 uppercase mb-2">ท็อปปิ้ง ({form.toppings.length})</p>
+          {form.toppings.length === 0 ? (
+            <p className="text-sm text-charcoal-400">ไม่ได้เลือกท็อปปิ้ง</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {form.toppings.map((id) => {
+                const t = TOPPING_MAP[id];
+                return (
+                  <span key={id} className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 text-xs font-medium rounded-full px-2.5 py-1">
+                    {t.emoji} {t.name}{t.price > 0 ? ` (+${t.price}฿)` : ''}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="p-4 grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <p className="text-charcoal-400 text-xs">ลูกค้า</p>
+            <p className="font-semibold">{form.name || '-'}</p>
+          </div>
+          <div>
+            <p className="text-charcoal-400 text-xs">เบอร์โทร</p>
+            <p className="font-semibold">{form.phone || '-'}</p>
+          </div>
+          <div>
+            <p className="text-charcoal-400 text-xs">เวลารับ</p>
+            <p className="font-semibold">{form.pickupTime ? new Date(form.pickupTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</p>
+          </div>
+          <div>
+            <p className="text-charcoal-400 text-xs">คำขอพิเศษ</p>
+            <p className="font-semibold">{form.note || '-'}</p>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-2xl bg-charcoal-900 text-white p-4 flex items-center justify-between">
+        <span className="font-medium">ยอดรวมทั้งหมด</span>
+        <span className="text-2xl font-extrabold text-amber-400">{money(pricing.total)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== CONFIRM MODAL ============================== */
+function ConfirmModal({ order, onClose, onAgain }) {
+  if (!order) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="animate-scaleIn bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm p-6 text-center relative">
+        <button onClick={onClose} className="absolute right-4 top-4 text-charcoal-400 hover:text-charcoal-700"><IconX size={18} /></button>
+        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-3">
+          <IconCheckCircle size={34} />
+        </div>
+        <h3 className="text-xl font-extrabold">สั่งออเดอร์สำเร็จ!</h3>
+        <p className="text-charcoal-400 text-sm mt-1">Order placed successfully</p>
+        <div className="my-4 rounded-2xl bg-amber-50 border-2 border-dashed border-amber-300 p-4">
+          <p className="text-xs text-charcoal-500">หมายเลขออเดอร์</p>
+          <p className="text-2xl font-extrabold text-amber-600 tracking-wider">{order.id}</p>
+          <p className="text-sm text-charcoal-600 mt-1">รับได้ประมาณ {new Date(order.pickupTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
+          <p className="text-lg font-bold text-charcoal-800 mt-1">{money(order.total)}</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <PrimaryButton className="w-full" onClick={onAgain}>สั่งออเดอร์ใหม่</PrimaryButton>
+          <GhostButton className="w-full" onClick={onClose}>ปิดหน้าต่างนี้</GhostButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== STICKY BAR ============================== */
+function StickyBar({ step, setStep, pricing, canNext, onSubmit, submitting }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t-2 border-charcoal-100 shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.12)]">
+      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+        {step > 1 && (
+          <button onClick={() => setStep((s) => s - 1)} className="btn-press w-11 h-11 shrink-0 rounded-2xl border-2 border-charcoal-200 flex items-center justify-center text-charcoal-600">
+            <IconChevronLeft size={20} />
+          </button>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] text-charcoal-400 leading-none">ยอดรวม{pricing.toppingCount > 0 ? ` · ท็อปปิ้ง ${pricing.toppingCount} รายการ` : ''}</p>
+          <p className="text-lg font-extrabold text-amber-600 leading-tight truncate">{money(pricing.total)}</p>
+        </div>
+        {step < 4 ? (
+          <PrimaryButton disabled={!canNext} onClick={() => setStep((s) => s + 1)} className="shrink-0">
+            ถัดไป <IconChevronRight size={18} />
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton disabled={!canNext || submitting} onClick={onSubmit} className="shrink-0">
+            {submitting ? 'กำลังส่ง...' : 'ยืนยันสั่งซื้อ'} <IconCheck size={18} />
+          </PrimaryButton>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================== CUSTOMER VIEW ============================== */
+const emptyForm = () => ({
+  eggId: 2, baseId: 'rice', styleId: 'standard', toppings: [],
+  pickupQuick: 15, pickupCustom: '', pickupTime: Date.now() + 15 * 60000,
+  name: '', phone: '', note: '',
+});
+
+function CustomerView({ storeOpen, stock, onPlaceOrder, toast }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState(emptyForm);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const pricing = useMemo(() => {
+    const egg = EGG_OPTIONS.find((e) => e.id === form.eggId);
+    const base = BASE_OPTIONS.find((b) => b.id === form.baseId);
+    const toppingsTotal = form.toppings.reduce((sum, id) => sum + (TOPPING_MAP[id] ? TOPPING_MAP[id].price : 0), 0);
+    const total = (egg ? egg.price : 0) + (base ? base.delta : 0) + toppingsTotal;
+    return { total, toppingCount: form.toppings.length };
+  }, [form]);
+
+  const canNext = useMemo(() => {
+    if (step === 1) return !!form.eggId && !!form.baseId && !!form.styleId;
+    if (step === 2) return true;
+    if (step === 3) return !!form.pickupTime && form.name.trim().length > 1 && form.phone.trim().length >= 9;
+    if (step === 4) return storeOpen;
+    return true;
+  }, [step, form, storeOpen]);
+
+  const handleSubmit = () => {
+    setSubmitting(true);
+    setTimeout(() => {
+      const order = {
+        id: `TS-0${Math.floor(100 + Math.random() * 800)}`,
+        status: 'pending',
+        name: form.name.trim(), phone: form.phone.trim(),
+        eggId: form.eggId, baseId: form.baseId, styleId: form.styleId,
+        toppings: form.toppings, note: form.note.trim(),
+        total: pricing.total,
+        createdAt: Date.now(), pickupTime: form.pickupTime, completedAt: null,
+      };
+      onPlaceOrder(order);
+      setConfirmedOrder(order);
+      setSubmitting(false);
+    }, 500);
+  };
+
+  const resetAll = () => { setForm(emptyForm()); setStep(1); setConfirmedOrder(null); };
+
+  if (!storeOpen) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center animate-fadeIn">
+        <p className="text-6xl mb-4">🔒</p>
+        <h2 className="text-2xl font-extrabold text-charcoal-800">ร้านปิดชั่วคราว</h2>
+        <p className="text-charcoal-400 mt-2">ขออภัย ขณะนี้ยังไม่เปิดรับพรีออเดอร์<br />กรุณาลองใหม่อีกครั้งภายหลังนะคะ</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 pt-6 pb-28">
+      <StepDots step={step} />
+      {step === 1 && <StepEggBase form={form} setForm={setForm} />}
+      {step === 2 && <StepToppings form={form} setForm={setForm} stock={stock} />}
+      {step === 3 && <StepPickup form={form} setForm={setForm} />}
+      {step === 4 && <StepSummary form={form} pricing={pricing} />}
+
+      <StickyBar step={step} setStep={setStep} pricing={pricing} canNext={canNext} onSubmit={handleSubmit} submitting={submitting} />
+      <ConfirmModal order={confirmedOrder} onClose={() => setConfirmedOrder(null)} onAgain={resetAll} />
+    </div>
+  );
+}
+
+/* ============================== KDS: ORDER CARD ============================== */
+function OrderCard({ order, now, onAdvance, isNew }) {
+  const egg = EGG_OPTIONS.find((e) => e.id === order.eggId);
+  const base = BASE_OPTIONS.find((b) => b.id === order.baseId);
+  const style = STYLE_OPTIONS.find((s) => s.id === order.styleId);
+  const diff = order.pickupTime - now;
+  const { overdue, txt } = fmtCountdown(diff);
+  const active = order.status === 'pending' || order.status === 'cooking';
+  const showUrgent = active && overdue;
+
+  return (
+    <div className={`rounded-2xl bg-white border-2 p-4 shadow-sm ${showUrgent ? 'border-red-400 animate-pulseRing' : 'border-charcoal-100'} ${isNew ? 'animate-newcard bg-gradient-to-r from-amber-50 via-amber-100 to-amber-50' : ''}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-extrabold text-lg leading-tight">{order.id}</p>
+          <p className="text-sm text-charcoal-500 flex items-center gap-1"><IconUser size={13} />{order.name}</p>
+          <p className="text-xs text-charcoal-400 flex items-center gap-1"><IconPhone size={11} />{order.phone}</p>
+        </div>
+        {active && (
+          <div className={`shrink-0 text-right rounded-xl px-2.5 py-1.5 font-mono font-bold text-sm ${showUrgent ? 'bg-red-100 text-red-600' : 'bg-charcoal-100 text-charcoal-700'}`}>
+            <div className="flex items-center gap-1 justify-end"><IconClock size={13} />{overdue ? `-${txt}` : txt}</div>
+            <p className="text-[9px] font-normal opacity-70">{overdue ? 'เลยเวลารับแล้ว' : 'ถึงเวลารับ'}</p>
+          </div>
+        )}
+        {order.status === 'ready' && (
+          <Pill className="bg-emerald-100 text-emerald-700 shrink-0">พร้อมรับ</Pill>
+        )}
+        {order.status === 'completed' && (
+          <Pill className="bg-charcoal-100 text-charcoal-500 shrink-0">เสร็จสิ้น</Pill>
+        )}
+      </div>
+
+      <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+        {egg ? egg.label : ''} · {base ? base.label : ''} · <span className="font-extrabold">{style ? style.label : ''}</span>
+      </div>
+
+      {order.toppings.length > 0 && (
+        <ul className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+          {order.toppings.map((id) => {
+            const t = TOPPING_MAP[id];
+            if (!t) return null;
+            return (
+              <li key={id} className="flex items-center gap-1.5 text-sm sm:text-base font-medium text-charcoal-700">
+                <span className="text-emerald-500"><IconCheck size={14} strokeWidth={3} /></span>
+                <span>{t.emoji} {t.name}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {order.note && (
+        <p className="mt-2 text-sm bg-red-50 text-red-700 rounded-lg px-3 py-2 font-medium">📝 {order.note}</p>
+      )}
+
+      {active && (
+        <button
+          onClick={() => onAdvance(order.id)}
+          className={`btn-press w-full mt-3 rounded-xl font-bold py-2.5 text-white ${order.status === 'pending' ? 'bg-orange-500 hover:bg-orange-400' : 'bg-emerald-500 hover:bg-emerald-400'}`}
+        >
+          {NEXT_LABEL[order.status]} →
+        </button>
+      )}
+      {order.status === 'ready' && (
+        <p className="text-center text-xs text-charcoal-400 mt-1">แตะปุ่มด้านบนเมื่อลูกค้ามารับแล้ว</p>
+      )}
+    </div>
+  );
+}
+
+/* ============================== KDS: COLUMN ============================== */
+function Column({ statusKey, orders, now, onAdvance, newIds }) {
+  const meta = STATUS_META[statusKey];
+  const toneBg = { amber: 'bg-amber-50 border-amber-200', orange: 'bg-orange-50 border-orange-200', emerald: 'bg-emerald-50 border-emerald-200', slate: 'bg-charcoal-50 border-charcoal-200' }[meta.col];
+  return (
+    <div className="flex flex-col min-w-[290px] w-[290px] sm:w-full shrink-0">
+      <div className={`rounded-t-2xl border-2 border-b-0 px-4 py-3 flex items-center justify-between ${toneBg}`}>
+        <p className="font-bold text-sm flex items-center gap-1.5">{meta.emoji} {meta.label}</p>
+        <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{orders.length}</span>
+      </div>
+      <div className={`flex-1 border-2 border-t-0 rounded-b-2xl p-2.5 space-y-2.5 min-h-[160px] max-h-[70vh] overflow-y-auto ${toneBg}`}>
+        {orders.length === 0 && <p className="text-center text-xs text-charcoal-400 py-8">ไม่มีออเดอร์</p>}
+        {orders.map((o) => <OrderCard key={o.id} order={o} now={now} onAdvance={onAdvance} isNew={newIds.has(o.id)} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ============================== KITCHEN VIEW ============================== */
+function KitchenView({ orders, onAdvance, newIds }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const pending = orders.filter((o) => o.status === 'pending').sort((a, b) => a.pickupTime - b.pickupTime);
+  const cooking = orders.filter((o) => o.status === 'cooking').sort((a, b) => a.pickupTime - b.pickupTime);
+  const ready = orders.filter((o) => o.status === 'ready').sort((a, b) => a.pickupTime - b.pickupTime);
+  const completed = orders.filter((o) => o.status === 'completed').sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)).slice(0, 12);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h2 className="text-xl font-extrabold flex items-center gap-2"><IconChefHat size={22} className="text-amber-600" /> Kitchen Display System</h2>
+        <p className="text-sm text-charcoal-400">อัปเดตอัตโนมัติทุกวินาที</p>
+      </div>
+      <div className="flex sm:grid sm:grid-cols-4 gap-4 overflow-x-auto no-scrollbar pb-2">
+        <Column statusKey="pending" orders={pending} now={now} onAdvance={onAdvance} newIds={newIds} />
+        <Column statusKey="cooking" orders={cooking} now={now} onAdvance={onAdvance} newIds={newIds} />
+        <Column statusKey="ready" orders={ready} now={now} onAdvance={onAdvance} newIds={newIds} />
+        <Column statusKey="completed" orders={completed} now={now} onAdvance={onAdvance} newIds={newIds} />
+      </div>
+    </div>
+  );
+}
+
+/* ============================== ADMIN SLIDE-OVER ============================== */
+function AdminPanel({ open, onClose, storeOpen, setStoreOpen, stock, setStock, orders, onReset }) {
+  const todayStart = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }, []);
+  const todayOrders = orders.filter((o) => o.createdAt >= todayStart);
+  const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
+  const toppingFreq = useMemo(() => {
+    const map = {};
+    todayOrders.forEach((o) => o.toppings.forEach((id) => { map[id] = (map[id] || 0) + 1; }));
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [todayOrders]);
+  const maxFreq = toppingFreq.length ? toppingFreq[0][1] : 1;
+
+  return (
+    <React.Fragment>
+      {open && <div className="fixed inset-0 bg-black/50 z-40 animate-fadeIn" onClick={onClose} />}
+      <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white z-50 shadow-2xl overflow-y-auto transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="sticky top-0 bg-white border-b border-charcoal-100 px-5 py-4 flex items-center justify-between z-10">
+          <h3 className="font-extrabold text-lg flex items-center gap-2"><IconSettings size={18} /> แผงควบคุมร้าน</h3>
+          <button onClick={onClose} className="text-charcoal-400 hover:text-charcoal-700"><IconX size={20} /></button>
+        </div>
+
+        <div className="p-5 space-y-6">
+          <section className="rounded-2xl border-2 border-charcoal-100 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${storeOpen ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                {storeOpen ? <IconUnlock size={18} /> : <IconLock size={18} />}
+              </div>
+              <div>
+                <p className="font-bold">{storeOpen ? 'ร้านเปิดอยู่' : 'ร้านปิดอยู่'}</p>
+                <p className="text-xs text-charcoal-400">ควบคุมการรับพรีออเดอร์</p>
+              </div>
+            </div>
+            <Switch checked={storeOpen} onChange={setStoreOpen} label="เปิด/ปิดร้าน" />
+          </section>
+
+          <section>
+            <h4 className="font-bold mb-3 flex items-center gap-2"><IconChart size={17} /> สรุปยอดวันนี้</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-amber-50 p-3.5">
+                <p className="text-xs text-charcoal-500">ออเดอร์ทั้งหมด</p>
+                <p className="text-2xl font-extrabold text-amber-700">{todayOrders.length}</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-50 p-3.5">
+                <p className="text-xs text-charcoal-500">รายได้รวม</p>
+                <p className="text-2xl font-extrabold text-emerald-700">{money(revenue)}</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl border-2 border-charcoal-100 p-3.5">
+              <p className="text-xs font-bold text-charcoal-500 uppercase mb-2 flex items-center gap-1.5"><IconTrend size={14} /> ท็อปปิ้งยอดนิยม</p>
+              {toppingFreq.length === 0 ? (
+                <p className="text-sm text-charcoal-400">ยังไม่มีข้อมูลวันนี้</p>
+              ) : (
+                <div className="space-y-2">
+                  {toppingFreq.map(([id, count]) => {
+                    const t = TOPPING_MAP[id];
+                    if (!t) return null;
+                    return (
+                      <div key={id} className="flex items-center gap-2">
+                        <span className="text-sm w-24 shrink-0 truncate">{t.emoji} {t.name}</span>
+                        <div className="flex-1 h-2.5 bg-charcoal-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(count / maxFreq) * 100}%` }} />
+                        </div>
+                        <span className="text-xs font-bold text-charcoal-500 w-5 text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="font-bold mb-3 flex items-center gap-2"><IconPackage size={17} /> สต๊อกท็อปปิ้ง</h4>
+            <div className="space-y-4">
+              {TOPPING_CATEGORIES.map((cat) => (
+                <div key={cat.key}>
+                  <p className="text-xs font-bold text-charcoal-400 uppercase mb-1.5">{cat.emoji} {cat.label}</p>
+                  <div className="space-y-1.5">
+                    {cat.items.map((it) => (
+                      <div key={it.id} className="flex items-center justify-between rounded-xl bg-charcoal-50 px-3 py-2">
+                        <span className="text-sm font-medium flex items-center gap-1.5">{it.emoji} {it.name}</span>
+                        <Switch checked={stock[it.id] !== false} onChange={(v) => setStock((s) => ({ ...s, [it.id]: v }))} label={`stock-${it.id}`} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <button onClick={onReset} className="btn-press w-full flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 font-semibold py-2.5 text-sm">
+              <IconRotate size={15} /> รีเซ็ตข้อมูลตัวอย่าง
+            </button>
+          </section>
+        </div>
+      </div>
+    </React.Fragment>
+  );
+}
+
+/* ============================== ROOT APP ============================== */
+let toastSeq = 1;
+function App() {
+  const [role, setRole] = useState('customer');
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [orders, setOrders] = useLocalStorage('ts001_orders', null);
+  const [stock, setStock] = useLocalStorage('ts001_stock', null);
+  const [storeOpen, setStoreOpen] = useLocalStorage('ts001_storeOpen', true);
+  const [toasts, setToasts] = useState([]);
+  const [newIds, setNewIds] = useState(new Set());
+  const prevCountRef = useRef(null);
+
+  // Seed on first load
+  useEffect(() => {
+    if (orders === null) setOrders(seedOrders());
+    if (stock === null) setStock({ shrimp: false });
+  }, []); // eslint-disable-line
+
+  const safeOrders = orders || [];
+  const safeStock = stock || {};
+
+  const dismissToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  const pushToast = useCallback((message, type = 'success', emoji) => {
+    const id = toastSeq++;
+    setToasts((t) => [...t, { id, message, type, emoji }]);
+    setTimeout(() => dismissToast(id), 3200);
+  }, [dismissToast]);
+
+  const handlePlaceOrder = useCallback((order) => {
+    setOrders((prev) => [...(prev || []), order]);
+    pushToast(`สั่งซื้อสำเร็จ! หมายเลขออเดอร์ ${order.id}`, 'success', '🎉');
+  }, [setOrders, pushToast]);
+
+  const handleAdvance = useCallback((id) => {
+    setOrders((prev) => (prev || []).map((o) => {
+      if (o.id !== id) return o;
+      const next = NEXT_STATUS[o.status];
+      if (!next) return o;
+      return { ...o, status: next, completedAt: next === 'completed' ? Date.now() : o.completedAt };
+    }));
+    pushToast('อัปเดตสถานะออเดอร์แล้ว', 'info', '🔄');
+  }, [setOrders, pushToast]);
+
+  const handleReset = useCallback(() => {
+    if (window.confirm('รีเซ็ตข้อมูลออเดอร์ตัวอย่างทั้งหมด?')) {
+      const seeded = seedOrders();
+      setOrders(seeded);
+      setStock({ shrimp: false });
+      setStoreOpen(true);
+      prevCountRef.current = seeded.length;
+      pushToast('รีเซ็ตข้อมูลเรียบร้อย', 'info', '🔄');
+    }
+  }, [setOrders, setStock, setStoreOpen, pushToast]);
+
+  // Detect new pending orders -> highlight + beep (feels like a live KDS)
+  useEffect(() => {
+    if (orders === null) return;
+    if (prevCountRef.current === null) { prevCountRef.current = orders.length; return; }
+    if (orders.length > prevCountRef.current) {
+      const fresh = orders.slice(prevCountRef.current);
+      const ids = new Set(fresh.map((o) => o.id));
+      setNewIds(ids);
+      playBeep();
+      const t = setTimeout(() => setNewIds(new Set()), 3000);
+      prevCountRef.current = orders.length;
+      return () => clearTimeout(t);
+    }
+    prevCountRef.current = orders.length;
+  }, [orders]);
+
+  const pendingCount = safeOrders.filter((o) => o.status === 'pending').length;
+
+  return (
+    <div className="min-h-screen pb-4">
+      <NavBar role={role} setRole={setRole} storeOpen={storeOpen} onOpenAdmin={() => setAdminOpen(true)} pendingCount={pendingCount} />
+
+      {role === 'customer' ? (
+        <CustomerView storeOpen={storeOpen} stock={safeStock} onPlaceOrder={handlePlaceOrder} toast={pushToast} />
+      ) : (
+        <KitchenView orders={safeOrders} onAdvance={handleAdvance} newIds={newIds} />
+      )}
+
+      <AdminPanel
+        open={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        storeOpen={storeOpen}
+        setStoreOpen={(v) => { setStoreOpen(v); pushToast(v ? 'เปิดร้านแล้ว' : 'ปิดร้านแล้ว', v ? 'success' : 'error', v ? '🔓' : '🔒'); }}
+        stock={safeStock}
+        setStock={setStock}
+        orders={safeOrders}
+        onReset={handleReset}
+      />
+
+      <ToastStack toasts={toasts} dismiss={dismissToast} />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
+
